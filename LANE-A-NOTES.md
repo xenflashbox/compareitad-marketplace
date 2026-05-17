@@ -183,6 +183,32 @@ Lane A Checkpoint:
 
 ---
 
+## Architect resolutions (added 2026-05-17)
+
+Three Lane A open questions were resolved by the architect at Lane A close-out. All three are now closed; recording for archaeology.
+
+### Q1 — No-op transaction process for `buyer-requirement` in Wave 3 → `structured-rfp-routing`
+
+Architect agreed with Lane A's recommendation. Wave 3 will author a custom **`structured-rfp-routing`** transaction process with explicit states: `published → bids-open → bid-selected → withdrawn OR materialized`. A zero-state process would forfeit Sharetribe-side event audit on the requirement's lifecycle, which we want for analytics. The explicit-state process gives us a free event stream even though the actual transaction-of-record lives on the `vendor-service-package` listing. **Spec'd in the Wave 3 kickoff — not Wave 2 work.**
+
+### Q2 — FastAPI publicData contract → set `listingType`, `transactionProcessAlias`, `unitType` explicitly
+
+Architect ruled: **set them explicitly in the FastAPI service-layer code**. Don't rely on Console listing-type config alone.
+
+Reasoning: the Sharetribe Web Template sets these because it does listing creation on behalf of an end user where the context is implicit. Compare ITAD's FastAPI service does listing creation on behalf of an **operator-mediated** workflow where being explicit about which listing type and which process alias is being created is the right discipline — "the difference between trust Console config and make the contract explicit in code." If Console config drifts (someone changes the default transaction process, renames a listing type), service-layer code should still create the listing we intended.
+
+**Baked into the Wave 2 Lane A prompt.** Service-layer `create_listing()` will accept `listing_type` as a required parameter, look up `transactionProcessAlias` from a code-side constants table, and contract-test for missing inputs.
+
+### Q3 — Cleanup endpoint posture → no dedicated endpoint, use the script
+
+Architect ruled **no dedicated `/admin/marketplace/cleanup-test-listings` endpoint** — it's YAGNI.
+
+The cleanup script Lane A already wrote (`scripts/lane-a-validate.js`) is idempotent and re-runnable; that's good enough for Dev environment cleanup during the build phase. ~4 zombie test listings in Dev are invisible to anyone not specifically querying Dev.
+
+**Wave 2+ commitment:** all future test-fixture listings across all lanes use the title prefix convention `TEST · Lane X · <description>` (matching the Lane A pattern), so the cleanup script keeps working without modification across waves.
+
+---
+
 ## File index
 
 - `scripts/lane-a-validate.js` — validation script, idempotent, re-runnable
