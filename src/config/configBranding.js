@@ -1,8 +1,8 @@
-import logoImageDesktop from '../assets/biketribe-logo-desktop.png';
-import logoImageMobile from '../assets/biketribe-logo-mobile.png';
-import brandImage from '../assets/biketribe-brandImage-1500.jpg';
-import facebookImage from '../assets/biketribe-facebook-sharing-1200x630.jpg';
-import twitterImage from '../assets/biketribe-twitter-sharing-600x314.jpg';
+import logoImageDesktop from '../assets/citad-logo-desktop.png';
+import logoImageMobile from '../assets/citad-logo-mobile.png';
+import brandImage from '../assets/citad-brandImage-1500.jpg';
+import facebookImage from '../assets/citad-facebook-sharing-1200x630.jpg';
+import twitterImage from '../assets/citad-twitter-sharing-600x314.jpg';
 
 /////////////////////////////////////////////////////////
 // This file contains configs that affect branding     //
@@ -18,7 +18,10 @@ import twitterImage from '../assets/biketribe-twitter-sharing-600x314.jpg';
 // This is saved as CSS Property: --marketplaceColor in src/app.js
 // Also --marketplaceColorDark and --marketplaceColorLight are generated from this one
 // by adding +/- 10% to lightness.
-export const marketplaceColor = '#7c3aed';
+// Compare ITAD navy; ochre accent #c19956 lives in Console-hosted branding.
+// Hosted branding (Console > Design > Branding) overrides these defaults at
+// runtime — these are the explicit fallbacks so the code never claims Biketribe.
+export const marketplaceColor = '#203a56';
 
 // Logo is used in Topbar on mobile and desktop, where height is the limiting factor.
 // Therefore, we strongly suggest that your image file for desktop logo is in landscape!
