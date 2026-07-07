@@ -16,3 +16,5 @@ build
 .lane-b-venv/
 npm-debug.log
 yarn-error.log
+.env.render
+.lane-b-venv/
