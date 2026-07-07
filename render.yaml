@@ -1,0 +1,41 @@
+# Render Blueprint for the Compare ITAD marketplace storefront.
+# Mirrors the live service srv-d849d89kh4rs73d1q26g (dashboard-created);
+# env var values are managed in the Render dashboard, not here.
+services:
+  - type: web
+    name: compareitad-marketplace
+    runtime: node
+    repo: https://github.com/xenflashbox/compareitad-marketplace
+    branch: main
+    plan: starter
+    region: oregon
+    buildCommand: yarn --frozen-lockfile install; yarn build
+    startCommand: yarn start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        sync: false
+      - key: REACT_APP_ENV
+        sync: false
+      - key: REACT_APP_CSP
+        sync: false
+      - key: REACT_APP_MARKETPLACE_NAME
+        sync: false
+      - key: REACT_APP_MARKETPLACE_ROOT_URL
+        sync: false
+      - key: REACT_APP_SHARETRIBE_SDK_CLIENT_ID
+        sync: false
+      - key: SHARETRIBE_SDK_CLIENT_SECRET
+        sync: false
+      - key: REACT_APP_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: REACT_APP_MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: REACT_APP_FACEBOOK_APP_ID
+        sync: false
+      - key: FACEBOOK_APP_SECRET
+        sync: false
+      - key: REACT_APP_GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

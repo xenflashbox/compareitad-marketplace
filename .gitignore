@@ -12,5 +12,7 @@ build
 # misc
 .DS_Store
 .env
+.env.render
+.lane-b-venv/
 npm-debug.log
 yarn-error.log
