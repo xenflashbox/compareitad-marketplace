@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "ItadVendorPaysRefundedProvider.Subject" "{listingTitle}: dispute resolved — transaction unwound" listingTitle=transaction.listing.title providerDisplayName=transaction.provider.display-name customerDisplayName=transaction.customer.display-name }}

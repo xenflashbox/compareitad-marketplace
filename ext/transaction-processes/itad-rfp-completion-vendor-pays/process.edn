@@ -1,0 +1,220 @@
+{:format :v3,
+ :transitions
+ [;; Seller (customer) initiates the $0.01 nominal checkout for the winning bid's
+  ;; vendor-service-package listing. Line items are set server-side
+  ;; (privileged) from the confirmed bid terms.
+  {:name :transition/request-payment,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-create-payment-intent}],
+   :to :state/pending-payment}
+  {:name :transition/confirm-payment,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/stripe-confirm-payment-intent}
+    {:name :action/stripe-capture-payment-intent}],
+   :from :state/pending-payment,
+   :to :state/funds-in-escrow}
+  {:name :transition/expire-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-payment]}
+     {:fn/period ["PT15M"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/pending-payment,
+   :to :state/payment-expired}
+  ;; Vendor (provider) confirms asset receipt; chain-of-custody begins.
+  {:name :transition/mark-service-in-progress,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/funds-in-escrow,
+   :to :state/service-in-progress}
+  ;; Operator twin — FastAPI drives via the Integration API.
+  {:name :transition/operator-mark-service-in-progress,
+   :actor :actor.role/operator,
+   :actions [],
+   :from :state/funds-in-escrow,
+   :to :state/service-in-progress}
+  ;; Vendor marks service complete; certificate of destruction issued;
+  ;; the seller's post-completion acceptance window (5 days) starts.
+  {:name :transition/mark-service-completed,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/service-in-progress,
+   :to :state/service-completed}
+  {:name :transition/operator-mark-service-completed,
+   :actor :actor.role/operator,
+   :actions [],
+   :from :state/service-in-progress,
+   :to :state/service-completed}
+  ;; Seller accepts completion — funds release to the vendor.
+  {:name :transition/accept,
+   :actor :actor.role/customer,
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/service-completed,
+   :to :state/accepted}
+  {:name :transition/operator-accept,
+   :actor :actor.role/operator,
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/service-completed,
+   :to :state/accepted}
+  ;; Acceptance window lapses without objection — funds release.
+  {:name :transition/auto-accept,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/service-completed]}
+     {:fn/period ["P5D"]}]},
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/service-completed,
+   :to :state/accepted}
+  ;; Seller raises an issue inside the acceptance window — operator
+  ;; mediation begins.
+  {:name :transition/dispute,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/service-completed,
+   :to :state/disputed}
+  {:name :transition/operator-dispute,
+   :actor :actor.role/operator,
+   :actions [],
+   :from :state/service-completed,
+   :to :state/disputed}
+  ;; Mediation outcomes: release funds to the vendor, or refund the seller.
+  {:name :transition/resolve-release,
+   :actor :actor.role/operator,
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/disputed,
+   :to :state/accepted}
+  {:name :transition/resolve-refund,
+   :actor :actor.role/operator,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/disputed,
+   :to :state/refunded}
+  ;; Operator cancellation before completion — full refund to the seller.
+  {:name :transition/cancel,
+   :actor :actor.role/operator,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/funds-in-escrow,
+   :to :state/canceled}
+  {:name :transition/cancel-from-service-in-progress,
+   :actor :actor.role/operator,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/service-in-progress,
+   :to :state/canceled}],
+ :notifications
+ [;; Delayed so a new customer has a chance to verify their email address.
+  {:name :notification/payment-receipt,
+   :on :transition/confirm-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/funds-in-escrow]}
+     {:fn/period ["PT15M"]}]},
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-payment-receipt}
+  {:name :notification/new-project,
+   :on :transition/confirm-payment,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-new-project}
+  {:name :notification/service-in-progress,
+   :on :transition/mark-service-in-progress,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-service-in-progress}
+  {:name :notification/operator-service-in-progress,
+   :on :transition/operator-mark-service-in-progress,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-service-in-progress}
+  {:name :notification/service-completed,
+   :on :transition/mark-service-completed,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-service-completed}
+  {:name :notification/operator-service-completed,
+   :on :transition/operator-mark-service-completed,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-service-completed}
+  {:name :notification/acceptance-reminder,
+   :on :transition/mark-service-completed,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/service-completed]}
+     {:fn/period ["P3D"]}]},
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-acceptance-reminder}
+  {:name :notification/operator-acceptance-reminder,
+   :on :transition/operator-mark-service-completed,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/service-completed]}
+     {:fn/period ["P3D"]}]},
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-acceptance-reminder}
+  {:name :notification/accepted,
+   :on :transition/accept,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-accepted}
+  {:name :notification/operator-accepted,
+   :on :transition/operator-accept,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-accepted}
+  {:name :notification/auto-accepted-provider,
+   :on :transition/auto-accept,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-accepted}
+  {:name :notification/auto-accepted-customer,
+   :on :transition/auto-accept,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-auto-accepted-customer}
+  {:name :notification/disputed,
+   :on :transition/dispute,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-disputed}
+  {:name :notification/operator-disputed-provider,
+   :on :transition/operator-dispute,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-disputed}
+  {:name :notification/operator-disputed-customer,
+   :on :transition/operator-dispute,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-operator-disputed}
+  {:name :notification/released-customer,
+   :on :transition/resolve-release,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-released-customer}
+  {:name :notification/released-provider,
+   :on :transition/resolve-release,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-released-provider}
+  {:name :notification/refunded-customer,
+   :on :transition/resolve-refund,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-refunded-customer}
+  {:name :notification/refunded-provider,
+   :on :transition/resolve-refund,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-refunded-provider}
+  {:name :notification/canceled-customer,
+   :on :transition/cancel,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-canceled-customer}
+  {:name :notification/canceled-provider,
+   :on :transition/cancel,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-canceled-provider}
+  {:name :notification/canceled-in-progress-customer,
+   :on :transition/cancel-from-service-in-progress,
+   :to :actor.role/customer,
+   :template :itad-vendor-pays-canceled-customer}
+  {:name :notification/canceled-in-progress-provider,
+   :on :transition/cancel-from-service-in-progress,
+   :to :actor.role/provider,
+   :template :itad-vendor-pays-canceled-provider}]}

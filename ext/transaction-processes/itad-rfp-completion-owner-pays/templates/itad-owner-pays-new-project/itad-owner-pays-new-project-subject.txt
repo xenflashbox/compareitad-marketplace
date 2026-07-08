@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "ItadOwnerPaysNewProject.Subject" "{customerDisplayName}'s payment for {listingTitle} is in escrow — begin service" listingTitle=transaction.listing.title providerDisplayName=transaction.provider.display-name customerDisplayName=transaction.customer.display-name }}

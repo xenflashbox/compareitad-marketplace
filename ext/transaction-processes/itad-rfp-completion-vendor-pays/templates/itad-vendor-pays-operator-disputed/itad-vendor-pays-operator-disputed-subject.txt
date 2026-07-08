@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "ItadVendorPaysOperatorDisputed.Subject" "{listingTitle}: your transaction is in dispute" listingTitle=transaction.listing.title providerDisplayName=transaction.provider.display-name customerDisplayName=transaction.customer.display-name }}

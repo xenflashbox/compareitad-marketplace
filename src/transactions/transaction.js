@@ -3,6 +3,8 @@ import * as purchaseProcess from './transactionProcessPurchase';
 import * as bookingProcess from './transactionProcessBooking';
 import * as inquiryProcess from './transactionProcessInquiry';
 import * as negotiationProcess from './transactionProcessNegotiation';
+import * as itadRfpCompletionOwnerPaysProcess from './transactionProcessItadRfpCompletionOwnerPays';
+import * as itadRfpCompletionVendorPaysProcess from './transactionProcessItadRfpCompletionVendorPays';
 
 // Supported unit types
 // Note: These are passed to translations/microcopy in certain cases.
@@ -21,6 +23,8 @@ export const PURCHASE_PROCESS_NAME = 'default-purchase';
 export const BOOKING_PROCESS_NAME = 'default-booking';
 export const INQUIRY_PROCESS_NAME = 'default-inquiry';
 export const NEGOTIATION_PROCESS_NAME = 'default-negotiation';
+export const ITAD_RFP_OWNER_PAYS_PROCESS_NAME = 'itad-rfp-completion-owner-pays';
+export const ITAD_RFP_VENDOR_PAYS_PROCESS_NAME = 'itad-rfp-completion-vendor-pays';
 
 /**
  * A process should export:
@@ -59,6 +63,18 @@ const PROCESSES = [
     alias: `${NEGOTIATION_PROCESS_NAME}/release-1`,
     process: negotiationProcess,
     unitTypes: [OFFER, REQUEST],
+  },
+  {
+    name: ITAD_RFP_OWNER_PAYS_PROCESS_NAME,
+    alias: `${ITAD_RFP_OWNER_PAYS_PROCESS_NAME}/release-1`,
+    process: itadRfpCompletionOwnerPaysProcess,
+    unitTypes: [ITEM],
+  },
+  {
+    name: ITAD_RFP_VENDOR_PAYS_PROCESS_NAME,
+    alias: `${ITAD_RFP_VENDOR_PAYS_PROCESS_NAME}/release-1`,
+    process: itadRfpCompletionVendorPaysProcess,
+    unitTypes: [ITEM],
   },
 ];
 

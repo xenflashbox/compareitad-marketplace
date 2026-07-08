@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "ItadOwnerPaysReleasedProvider.Subject" "{listingTitle}: dispute resolved — your payout is on its way" listingTitle=transaction.listing.title providerDisplayName=transaction.provider.display-name customerDisplayName=transaction.customer.display-name }}
